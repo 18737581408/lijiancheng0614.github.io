@@ -1,0 +1,1051 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="lijiancheng0614">
+    <title>CAFFE提取特征并可视化 - lijiancheng0614</title>
+    <meta name="author" content="Jiancheng Li">
+    
+    
+        <link rel="icon" href="http://lijiancheng0614.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <meta name="description" content="使用CAFFE（ http://caffe.berkeleyvision.org ）运行CNN网络，并提取出特征，将其存储成lmdb以供后续使用，亦可以对其可视化。">
+<meta name="keywords" content="Computer Vision,CAFFE,Deep Learning">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="CAFFE提取特征并可视化">
+<meta property="og:url" content="http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/index.html">
+<meta property="og:site_name" content="lijiancheng0614">
+<meta property="og:description" content="使用CAFFE（ http://caffe.berkeleyvision.org ）运行CNN网络，并提取出特征，将其存储成lmdb以供后续使用，亦可以对其可视化。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-11-22T08:27:01.008Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CAFFE提取特征并可视化">
+<meta name="twitter:description" content="使用CAFFE（ http://caffe.berkeleyvision.org ）运行CNN网络，并提取出特征，将其存储成lmdb以供后续使用，亦可以对其可视化。">
+<meta name="twitter:creator" content="@lijiancheng0614">
+    
+        <link rel="publisher" href="https://plus.google.com/+JianchengLi"/>
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://lijiancheng0614.github.io/assets/images/avatar.jpg"/>
+    
+    
+        <meta property="og:image" content="https://raw.githubusercontent.com/BVLC/caffe/master/examples/images/cat.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://raw.githubusercontent.com/BVLC/caffe/master/examples/images/cat.jpg" />
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/style.min.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-66414521-1']);
+        _gaq.push(['_trackPageview']);
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?e1deebf45fca6db0c7cac1c85f8b91b5";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">lijiancheng0614</a>
+    </div>
+    
+        
+            <a  class="header-right-icon open-algolia-search"
+                href="#search">
+        
+        
+            <i class="fa fa-lg fa-search"></i>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/avatar.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Jiancheng Li</h4>
+                
+                    <h5 class="sidebar-profile-bio">lijiancheng0614@gmail.com</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/projects"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-file-code-o"></i>
+                        <span class="sidebar-button-desc">Projects</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-search"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/lijiancheng0614" target="_blank" rel="noopener">
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/lijiancheng0614/" target="_blank" rel="noopener">
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-linkedin"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:lijiancheng0614@gmail.com" target="_blank" rel="noopener">
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-envelope-o"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-rss"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post" itemscope itemType="http://schema.org/BlogPosting">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title" itemprop="headline">
+            CAFFE提取特征并可视化
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time itemprop="datePublished" datetime="2015-08-21T00:00:00+08:00">
+	
+		    Aug 21, 2015
+    	
+    </time>
+    
+        <span>in </span>
+        <strong>
+    <a class="category-link" href="/categories/Research/">Research</a>
+
+</strong>
+    
+    
+        / 
+        <span class="text-color-light text-small">Tagged in</span>
+        <strong>
+    <a class="tag-link" href="/tags/CAFFE/">CAFFE</a>, <a class="tag-link" href="/tags/Computer-Vision/">Computer Vision</a>, <a class="tag-link" href="/tags/Deep-Learning/">Deep Learning</a>
+</strong>
+    
+</div>
+
+    
+</div>
+    
+    <div class="post-content markdown" itemprop="articleBody">
+        <div class="main-content-wrap">
+            <span id="table-of-contents"></span><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#使用已训练好的模型进行图像分类"><span class="toc-text">使用已训练好的模型进行图像分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#提取特征并可视化"><span class="toc-text">提取特征并可视化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#提取特征并存储"><span class="toc-text">提取特征并存储</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用特征文件进行可视化"><span class="toc-text">使用特征文件进行可视化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#在python中读取mat文件"><span class="toc-text">在python中读取mat文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用自己的网络"><span class="toc-text">使用自己的网络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用model-zoo里的网络"><span class="toc-text">使用Model Zoo里的网络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+            <p>使用CAFFE（ <a href="http://caffe.berkeleyvision.org" class="uri" target="_blank" rel="external">http://caffe.berkeleyvision.org</a> ）运行CNN网络，并提取出特征，将其存储成lmdb以供后续使用，亦可以对其可视化。</p>
+<a id="more"></a>
+<h2 id="使用已训练好的模型进行图像分类">使用已训练好的模型进行图像分类</h2>
+<p>其实在 <a href="http://nbviewer.ipython.org/github/BVLC/caffe/blob/master/examples/00-classification.ipynb" class="uri" target="_blank" rel="external">http://nbviewer.ipython.org/github/BVLC/caffe/blob/master/examples/00-classification.ipynb</a> 中已经很详细地介绍了怎么使用已训练好的模型对测试图像进行分类了。由于CAFFE不断更新，这个页面的内容和代码也会更新。以下只记录当前能运行的主要步骤。</p>
+<ol style="list-style-type: decimal">
+<li><p>下载CAFFE，并安装相应的dependencies。</p></li>
+<li><p>在<code>caffe_root</code>下运行<code>./scripts/download_model_binary.py models/bvlc_reference_caffenet</code>获得预训练的CaffeNet。</p></li>
+<li><p>在ipython里（或python，但需要把部分代码注释掉）运行以下代码来加载网络。</p>
+<ul>
+<li><code>./models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel</code></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line">%matplotlib inline</div><div class="line"></div><div class="line"><span class="comment"># Make sure that caffe is on the python path:</span></div><div class="line">caffe_root = <span class="string">'../'</span>  <span class="comment"># this file is expected to be in &#123;caffe_root&#125;/examples</span></div><div class="line"><span class="keyword">import</span> sys</div><div class="line">sys.path.insert(<span class="number">0</span>, caffe_root + <span class="string">'python'</span>)</div><div class="line"></div><div class="line"><span class="keyword">import</span> caffe</div><div class="line"></div><div class="line">plt.rcParams[<span class="string">'figure.figsize'</span>] = (<span class="number">10</span>, <span class="number">10</span>)</div><div class="line">plt.rcParams[<span class="string">'image.interpolation'</span>] = <span class="string">'nearest'</span></div><div class="line">plt.rcParams[<span class="string">'image.cmap'</span>] = <span class="string">'gray'</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> os</div><div class="line"><span class="keyword">if</span> <span class="keyword">not</span> os.path.isfile(caffe_root + <span class="string">'models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel'</span>):</div><div class="line">    print(<span class="string">"Downloading pre-trained CaffeNet model..."</span>)</div><div class="line">    !../scripts/download_model_binary.py ../models/bvlc_reference_caffenet</div></pre></td></tr></table></figure></li>
+<li><p>设置网络为测试阶段，并加载网络模型prototxt和数据平均值mean_npy。</p>
+<ul>
+<li><p><code>./models/bvlc_reference_caffenet/deploy.prototxt</code></p></li>
+<li><p><code>./models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel</code></p></li>
+<li><p><code>./python/caffe/imagenet/ilsvrc_2012_mean.npy</code></p></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">caffe.set_mode_cpu()</div><div class="line">net = caffe.Net(caffe_root + <span class="string">'models/bvlc_reference_caffenet/deploy.prototxt'</span>,</div><div class="line">                caffe_root + <span class="string">'models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel'</span>,</div><div class="line">                caffe.TEST)</div><div class="line"></div><div class="line"><span class="comment"># input preprocessing: 'data' is the name of the input blob == net.inputs[0]</span></div><div class="line">transformer = caffe.io.Transformer(&#123;<span class="string">'data'</span>: net.blobs[<span class="string">'data'</span>].data.shape&#125;)</div><div class="line">transformer.set_transpose(<span class="string">'data'</span>, (<span class="number">2</span>,<span class="number">0</span>,<span class="number">1</span>))</div><div class="line">transformer.set_mean(<span class="string">'data'</span>, np.load(caffe_root + <span class="string">'python/caffe/imagenet/ilsvrc_2012_mean.npy'</span>).mean(<span class="number">1</span>).mean(<span class="number">1</span>)) <span class="comment"># mean pixel</span></div><div class="line">transformer.set_raw_scale(<span class="string">'data'</span>, <span class="number">255</span>)  <span class="comment"># the reference model operates on images in [0,255] range instead of [0,1]</span></div><div class="line">transformer.set_channel_swap(<span class="string">'data'</span>, (<span class="number">2</span>,<span class="number">1</span>,<span class="number">0</span>))  <span class="comment"># the reference model has channels in BGR order instead of RGB</span></div></pre></td></tr></table></figure></li>
+<li><p>加载测试图片，并预测分类结果。</p>
+<ul>
+<li><code>./examples/images/cat.jpg</code></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># set net to batch size of 50</span></div><div class="line">net.blobs[<span class="string">'data'</span>].reshape(<span class="number">50</span>,<span class="number">3</span>,<span class="number">227</span>,<span class="number">227</span>)</div><div class="line">net.blobs[<span class="string">'data'</span>].data[...] = transformer.preprocess(<span class="string">'data'</span>, caffe.io.load_image(caffe_root + <span class="string">'examples/images/cat.jpg'</span>))</div><div class="line">out = net.forward()</div><div class="line">print(<span class="string">"Predicted class is #&#123;&#125;."</span>.format(out[<span class="string">'prob'</span>].argmax()))</div></pre></td></tr></table></figure></li>
+<li><p>加载标签，并输出top_k。</p>
+<ul>
+<li><code>./data/ilsvrc12/synset_words.txt</code></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># load labels</span></div><div class="line">imagenet_labels_filename = caffe_root + <span class="string">'data/ilsvrc12/synset_words.txt'</span></div><div class="line"><span class="keyword">try</span>:</div><div class="line">    labels = np.loadtxt(imagenet_labels_filename, str, delimiter=<span class="string">'\t'</span>)</div><div class="line"><span class="keyword">except</span>:</div><div class="line">    !../data/ilsvrc12/get_ilsvrc_aux.sh</div><div class="line">    labels = np.loadtxt(imagenet_labels_filename, str, delimiter=<span class="string">'\t'</span>)</div><div class="line"></div><div class="line"><span class="comment"># sort top k predictions from softmax output</span></div><div class="line">top_k = net.blobs[<span class="string">'prob'</span>].data[<span class="number">0</span>].flatten().argsort()[<span class="number">-1</span>:<span class="number">-6</span>:<span class="number">-1</span>]</div><div class="line"><span class="keyword">print</span> labels[top_k]</div></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="提取特征并可视化">提取特征并可视化</h2>
+<p>接上一章，如果提取特征之后不作存储直接可视化的话，可按以下步骤。</p>
+<ol style="list-style-type: decimal">
+<li><p>网络的特征存储在<code>net.blobs</code>，参数和bias存储在<code>net.params</code>，以下代码输出每一层的名称和大小。这里亦可手动把它们存储下来。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[(k, v.data.shape) <span class="keyword">for</span> k, v <span class="keyword">in</span> net.blobs.items()]</div><div class="line">[(k, v[<span class="number">0</span>].data.shape) <span class="keyword">for</span> k, v <span class="keyword">in</span> net.params.items()]</div></pre></td></tr></table></figure></li>
+<li><p>可视化。以下是辅助函数。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># take an array of shape (n, height, width) or (n, height, width, channels)</span></div><div class="line"><span class="comment"># and visualize each (height, width) thing in a grid of size approx. sqrt(n) by sqrt(n)</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">vis_square</span><span class="params">(data, padsize=<span class="number">1</span>, padval=<span class="number">0</span>)</span>:</span></div><div class="line">    data -= data.min()</div><div class="line">    data /= data.max()</div><div class="line">    </div><div class="line">    <span class="comment"># force the number of filters to be square</span></div><div class="line">    n = int(np.ceil(np.sqrt(data.shape[<span class="number">0</span>])))</div><div class="line">    padding = ((<span class="number">0</span>, n ** <span class="number">2</span> - data.shape[<span class="number">0</span>]), (<span class="number">0</span>, padsize), (<span class="number">0</span>, padsize)) + ((<span class="number">0</span>, <span class="number">0</span>),) * (data.ndim - <span class="number">3</span>)</div><div class="line">    data = np.pad(data, padding, mode=<span class="string">'constant'</span>, constant_values=(padval, padval))</div><div class="line">    </div><div class="line">    <span class="comment"># tile the filters into an image</span></div><div class="line">    data = data.reshape((n, n) + data.shape[<span class="number">1</span>:]).transpose((<span class="number">0</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">3</span>) + tuple(range(<span class="number">4</span>, data.ndim + <span class="number">1</span>)))</div><div class="line">    data = data.reshape((n * data.shape[<span class="number">1</span>], n * data.shape[<span class="number">3</span>]) + data.shape[<span class="number">4</span>:])</div><div class="line">    </div><div class="line">    plt.imshow(data)</div><div class="line">    plt.show()</div></pre></td></tr></table></figure>
+<ul>
+<li>根据每一层的名称，选择需要可视化的层，可以可视化filters（参数）和output（特征）</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># the parameters are a list of [weights, biases]</span></div><div class="line">filters = net.params[<span class="string">'conv1'</span>][<span class="number">0</span>].data</div><div class="line">vis_square(filters.transpose(<span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>))</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'conv1'</span>].data[<span class="number">0</span>, :<span class="number">36</span>]</div><div class="line">vis_square(feat, padval=<span class="number">1</span>)</div><div class="line"></div><div class="line"><span class="comment"># There are 256 filters, each of which has dimension 5 x 5 x 48. We show only the first 48 filters, with each channel shown separately, so that each filter is a row.</span></div><div class="line">filters = net.params[<span class="string">'conv2'</span>][<span class="number">0</span>].data</div><div class="line">vis_square(filters[:<span class="number">48</span>].reshape(<span class="number">48</span>**<span class="number">2</span>, <span class="number">5</span>, <span class="number">5</span>))</div><div class="line"></div><div class="line"><span class="comment"># rectified, only the first 36 of 256 channels</span></div><div class="line">feat = net.blobs[<span class="string">'conv2'</span>].data[<span class="number">0</span>, :<span class="number">36</span>]</div><div class="line">vis_square(feat, padval=<span class="number">1</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'conv3'</span>].data[<span class="number">0</span>]</div><div class="line">vis_square(feat, padval=<span class="number">0.5</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'conv4'</span>].data[<span class="number">0</span>]</div><div class="line">vis_square(feat, padval=<span class="number">0.5</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'conv5'</span>].data[<span class="number">0</span>]</div><div class="line">vis_square(feat, padval=<span class="number">0.5</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'pool5'</span>].data[<span class="number">0</span>]</div><div class="line">vis_square(feat, padval=<span class="number">1</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'fc6'</span>].data[<span class="number">0</span>]</div><div class="line">plt.subplot(<span class="number">2</span>, <span class="number">1</span>, <span class="number">1</span>)</div><div class="line">plt.plot(feat.flat)</div><div class="line">plt.subplot(<span class="number">2</span>, <span class="number">1</span>, <span class="number">2</span>)</div><div class="line">_ = plt.hist(feat.flat[feat.flat &gt; <span class="number">0</span>], bins=<span class="number">100</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'fc7'</span>].data[<span class="number">0</span>]</div><div class="line">plt.subplot(<span class="number">2</span>, <span class="number">1</span>, <span class="number">1</span>)</div><div class="line">plt.plot(feat.flat)</div><div class="line">plt.subplot(<span class="number">2</span>, <span class="number">1</span>, <span class="number">2</span>)</div><div class="line">_ = plt.hist(feat.flat[feat.flat &gt; <span class="number">0</span>], bins=<span class="number">100</span>)</div><div class="line"></div><div class="line">feat = net.blobs[<span class="string">'prob'</span>].data[<span class="number">0</span>]</div><div class="line">plt.plot(feat.flat)</div></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="提取特征并存储">提取特征并存储</h2>
+<p>CAFFE提供了一个提取特征的tool，见 <a href="http://caffe.berkeleyvision.org/gathered/examples/feature_extraction.html" class="uri" target="_blank" rel="external">http://caffe.berkeleyvision.org/gathered/examples/feature_extraction.html</a> 。</p>
+<ol style="list-style-type: decimal">
+<li><p>选择需要特征提取的图像。</p>
+<ul>
+<li><code>./examples/_temp</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">mkdir examples/_temp</div><div class="line">find `<span class="built_in">pwd</span>`/examples/images -<span class="built_in">type</span> f -<span class="built_in">exec</span> <span class="built_in">echo</span> &#123;&#125; \; &gt; examples/_temp/temp.txt</div><div class="line">sed <span class="string">"s/$/ 0/"</span> examples/_temp/temp.txt &gt; examples/_temp/file_list.txt</div></pre></td></tr></table></figure></li>
+<li><p>跟前面一样，下载模型以及定义prototxt。</p>
+<ul>
+<li><p><code>./models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel</code></p></li>
+<li><p><code>./examples/_temp/imagenet_val.prototxt</code></p></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">./data/ilsvrc12/get_ilsvrc_aux.sh</div><div class="line">cp examples/feature_extraction/imagenet_val.prototxt examples/_temp</div></pre></td></tr></table></figure></li>
+<li><p>使用<code>extract_features.bin</code>工具提取特征，并存储为lmdb。运行参数为<code>extract_features.bin  $MODEL $PROTOTXT $LAYER $LMDB_OUTPUT_PATH $BATCHSIZE</code></p>
+<ul>
+<li><p><code>./models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel</code></p></li>
+<li><p><code>./examples/_temp/imagenet_val.prototxt</code></p></li>
+<li><p><code>./examples/_temp/features</code></p></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">./build/tools/extract_features.bin \</div><div class="line">    models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel \</div><div class="line">    examples/_temp/imagenet_val.prototxt \</div><div class="line">    fc7 examples/_temp/features 10 lmdb</div></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="使用特征文件进行可视化">使用特征文件进行可视化</h2>
+<p>参考 <a href="http://www.cnblogs.com/platero/p/3967208.html" class="uri" target="_blank" rel="external">http://www.cnblogs.com/platero/p/3967208.html</a> 和 lmdb的文档 <a href="https://lmdb.readthedocs.org/en/release" class="uri" target="_blank" rel="external">https://lmdb.readthedocs.org/en/release</a> ，读取lmdb文件，然后转换成mat文件，再用matlab调用mat进行可视化。</p>
+<ol style="list-style-type: decimal">
+<li>安装CAFFE的python依赖库，并使用以下两个辅助文件把lmdb转换为mat。
+<ul>
+<li><p><code>./feat_helper_pb2.py</code><br>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Generated by the protocol buffer compiler.  DO NOT EDIT!</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> google.protobuf <span class="keyword">import</span> descriptor</div><div class="line"><span class="keyword">from</span> google.protobuf <span class="keyword">import</span> message</div><div class="line"><span class="keyword">from</span> google.protobuf <span class="keyword">import</span> reflection</div><div class="line"><span class="keyword">from</span> google.protobuf <span class="keyword">import</span> descriptor_pb2</div><div class="line"><span class="comment"># @@protoc_insertion_point(imports)</span></div><div class="line"></div><div class="line"></div><div class="line">DESCRIPTOR = descriptor.FileDescriptor(</div><div class="line">  name=<span class="string">'datum.proto'</span>,</div><div class="line">  package=<span class="string">'feat_extract'</span>,</div><div class="line">  serialized_pb=<span class="string">'\n\x0b\x64\x61tum.proto\x12\x0c\x66\x65\x61t_extract\"i\n\x05\x44\x61tum\x12\x10\n\x08\x63hannels\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\r\n\x05width\x18\x03 \x01(\x05\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\x12\r\n\x05label\x18\x05 \x01(\x05\x12\x12\n\nfloat_data\x18\x06 \x03(\x02'</span>)</div><div class="line"></div><div class="line"></div><div class="line">_DATUM = descriptor.Descriptor(</div><div class="line">  name=<span class="string">'Datum'</span>,</div><div class="line">  full_name=<span class="string">'feat_extract.Datum'</span>,</div><div class="line">  filename=<span class="keyword">None</span>,</div><div class="line">  file=DESCRIPTOR,</div><div class="line">  containing_type=<span class="keyword">None</span>,</div><div class="line">  fields=[</div><div class="line">    descriptor.FieldDescriptor(</div><div class="line">      name=<span class="string">'channels'</span>, full_name=<span class="string">'feat_extract.Datum.channels'</span>, index=<span class="number">0</span>,</div><div class="line">      number=<span class="number">1</span>, type=<span class="number">5</span>, cpp_type=<span class="number">1</span>, label=<span class="number">1</span>,</div><div class="line">      has_default_value=<span class="keyword">False</span>, default_value=<span class="number">0</span>,</div><div class="line">      message_type=<span class="keyword">None</span>, enum_type=<span class="keyword">None</span>, containing_type=<span class="keyword">None</span>,</div><div class="line">      is_extension=<span class="keyword">False</span>, extension_scope=<span class="keyword">None</span>,</div><div class="line">      options=<span class="keyword">None</span>),</div><div class="line">    descriptor.FieldDescriptor(</div><div class="line">      name=<span class="string">'height'</span>, full_name=<span class="string">'feat_extract.Datum.height'</span>, index=<span class="number">1</span>,</div><div class="line">      number=<span class="number">2</span>, type=<span class="number">5</span>, cpp_type=<span class="number">1</span>, label=<span class="number">1</span>,</div><div class="line">      has_default_value=<span class="keyword">False</span>, default_value=<span class="number">0</span>,</div><div class="line">      message_type=<span class="keyword">None</span>, enum_type=<span class="keyword">None</span>, containing_type=<span class="keyword">None</span>,</div><div class="line">      is_extension=<span class="keyword">False</span>, extension_scope=<span class="keyword">None</span>,</div><div class="line">      options=<span class="keyword">None</span>),</div><div class="line">    descriptor.FieldDescriptor(</div><div class="line">      name=<span class="string">'width'</span>, full_name=<span class="string">'feat_extract.Datum.width'</span>, index=<span class="number">2</span>,</div><div class="line">      number=<span class="number">3</span>, type=<span class="number">5</span>, cpp_type=<span class="number">1</span>, label=<span class="number">1</span>,</div><div class="line">      has_default_value=<span class="keyword">False</span>, default_value=<span class="number">0</span>,</div><div class="line">      message_type=<span class="keyword">None</span>, enum_type=<span class="keyword">None</span>, containing_type=<span class="keyword">None</span>,</div><div class="line">      is_extension=<span class="keyword">False</span>, extension_scope=<span class="keyword">None</span>,</div><div class="line">      options=<span class="keyword">None</span>),</div><div class="line">    descriptor.FieldDescriptor(</div><div class="line">      name=<span class="string">'data'</span>, full_name=<span class="string">'feat_extract.Datum.data'</span>, index=<span class="number">3</span>,</div><div class="line">      number=<span class="number">4</span>, type=<span class="number">12</span>, cpp_type=<span class="number">9</span>, label=<span class="number">1</span>,</div><div class="line">      has_default_value=<span class="keyword">False</span>, default_value=<span class="string">""</span>,</div><div class="line">      message_type=<span class="keyword">None</span>, enum_type=<span class="keyword">None</span>, containing_type=<span class="keyword">None</span>,</div><div class="line">      is_extension=<span class="keyword">False</span>, extension_scope=<span class="keyword">None</span>,</div><div class="line">      options=<span class="keyword">None</span>),</div><div class="line">    descriptor.FieldDescriptor(</div><div class="line">      name=<span class="string">'label'</span>, full_name=<span class="string">'feat_extract.Datum.label'</span>, index=<span class="number">4</span>,</div><div class="line">      number=<span class="number">5</span>, type=<span class="number">5</span>, cpp_type=<span class="number">1</span>, label=<span class="number">1</span>,</div><div class="line">      has_default_value=<span class="keyword">False</span>, default_value=<span class="number">0</span>,</div><div class="line">      message_type=<span class="keyword">None</span>, enum_type=<span class="keyword">None</span>, containing_type=<span class="keyword">None</span>,</div><div class="line">      is_extension=<span class="keyword">False</span>, extension_scope=<span class="keyword">None</span>,</div><div class="line">      options=<span class="keyword">None</span>),</div><div class="line">    descriptor.FieldDescriptor(</div><div class="line">      name=<span class="string">'float_data'</span>, full_name=<span class="string">'feat_extract.Datum.float_data'</span>, index=<span class="number">5</span>,</div><div class="line">      number=<span class="number">6</span>, type=<span class="number">2</span>, cpp_type=<span class="number">6</span>, label=<span class="number">3</span>,</div><div class="line">      has_default_value=<span class="keyword">False</span>, default_value=[],</div><div class="line">      message_type=<span class="keyword">None</span>, enum_type=<span class="keyword">None</span>, containing_type=<span class="keyword">None</span>,</div><div class="line">      is_extension=<span class="keyword">False</span>, extension_scope=<span class="keyword">None</span>,</div><div class="line">      options=<span class="keyword">None</span>),</div><div class="line">  ],</div><div class="line">  extensions=[</div><div class="line">  ],</div><div class="line">  nested_types=[],</div><div class="line">  enum_types=[</div><div class="line">  ],</div><div class="line">  options=<span class="keyword">None</span>,</div><div class="line">  is_extendable=<span class="keyword">False</span>,</div><div class="line">  extension_ranges=[],</div><div class="line">  serialized_start=<span class="number">29</span>,</div><div class="line">  serialized_end=<span class="number">134</span>,</div><div class="line">)</div><div class="line"></div><div class="line">DESCRIPTOR.message_types_by_name[<span class="string">'Datum'</span>] = _DATUM</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Datum</span><span class="params">(message.Message)</span>:</span></div><div class="line">  __metaclass__ = reflection.GeneratedProtocolMessageType</div><div class="line">  DESCRIPTOR = _DATUM</div><div class="line">  </div><div class="line">  <span class="comment"># @@protoc_insertion_point(class_scope:feat_extract.Datum)</span></div><div class="line"></div><div class="line"><span class="comment"># @@protoc_insertion_point(module_scope)</span></div></pre></td></tr></table></figure></p></li>
+<li><p><code>./lmdb2mat.py</code><br>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> lmdb</div><div class="line"><span class="keyword">import</span> feat_helper_pb2</div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"><span class="keyword">import</span> scipy.io <span class="keyword">as</span> sio</div><div class="line"><span class="keyword">import</span> time</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">(argv)</span>:</span></div><div class="line">    lmdb_name = sys.argv[<span class="number">1</span>]</div><div class="line">    <span class="keyword">print</span> <span class="string">"%s"</span> % sys.argv[<span class="number">1</span>]</div><div class="line">    batch_num = int(sys.argv[<span class="number">2</span>]);</div><div class="line">    batch_size = int(sys.argv[<span class="number">3</span>]);</div><div class="line">    window_num = batch_num*batch_size;</div><div class="line"></div><div class="line">    start = time.time()</div><div class="line">    <span class="keyword">if</span> <span class="string">'db'</span> <span class="keyword">not</span> <span class="keyword">in</span> locals().keys():</div><div class="line">        db = lmdb.open(lmdb_name)</div><div class="line">        txn= db.begin()</div><div class="line">        cursor = txn.cursor()</div><div class="line">        cursor.iternext()</div><div class="line">        datum = feat_helper_pb2.Datum()</div><div class="line"></div><div class="line">        keys = []</div><div class="line">        values = []</div><div class="line">        <span class="keyword">for</span> key, value <span class="keyword">in</span> enumerate( cursor.iternext_nodup()):</div><div class="line">            keys.append(key)</div><div class="line">            values.append(cursor.value())</div><div class="line"></div><div class="line">    ft = np.zeros((window_num, int(sys.argv[<span class="number">4</span>])))</div><div class="line">    <span class="keyword">for</span> im_idx <span class="keyword">in</span> range(window_num):</div><div class="line">        datum.ParseFromString(values[im_idx])</div><div class="line">        ft[im_idx, :] = datum.float_data</div><div class="line"></div><div class="line">    <span class="keyword">print</span> <span class="string">'time 1: %f'</span> %(time.time() - start)</div><div class="line">    sio.savemat(sys.argv[<span class="number">5</span>], &#123;<span class="string">'feats'</span>:ft&#125;)</div><div class="line">    <span class="keyword">print</span> <span class="string">'time 2: %f'</span> %(time.time() - start)</div><div class="line">    <span class="keyword">print</span> <span class="string">'done!'</span></div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</div><div class="line">    <span class="keyword">import</span> sys</div><div class="line">    main(sys.argv)</div></pre></td></tr></table></figure></p></li>
+<li><p>运行bash<br>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/usr/bin/env sh</span></div><div class="line">LMDB=./examples/_temp/features_fc7 <span class="comment"># lmdb文件路径</span></div><div class="line">BATCHNUM=1</div><div class="line">BATCHSIZE=10</div><div class="line"><span class="comment"># DIM=290400 # feature长度，conv1</span></div><div class="line"><span class="comment"># DIM=43264 # conv5</span></div><div class="line">DIM=4096</div><div class="line">OUT=./examples/_temp/features_fc7.mat <span class="comment">#mat文件保存路径</span></div><div class="line">python ./lmdb2mat.py <span class="variable">$LMDB</span> <span class="variable">$BATCHNUM</span> <span class="variable">$BATCHSIZE</span> <span class="variable">$DIM</span> <span class="variable">$OUT</span></div></pre></td></tr></table></figure></p></li>
+</ul></li>
+<li>参考UFLDL里的display_network函数，对mat文件里的特征进行可视化。
+<ul>
+<li><p><code>display_network.m</code><br>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="params">[h, array]</span> = <span class="title">display_network</span><span class="params">(A, opt_normalize, opt_graycolor, cols, opt_colmajor)</span></span></div><div class="line"><span class="comment">% This function visualizes filters in matrix A. Each column of A is a</span></div><div class="line"><span class="comment">% filter. We will reshape each column into a square image and visualizes</span></div><div class="line"><span class="comment">% on each cell of the visualization panel. </span></div><div class="line"><span class="comment">% All other parameters are optional, usually you do not need to worry</span></div><div class="line"><span class="comment">% about it.</span></div><div class="line"><span class="comment">% opt_normalize: whether we need to normalize the filter so that all of</span></div><div class="line"><span class="comment">% them can have similar contrast. Default value is true.</span></div><div class="line"><span class="comment">% opt_graycolor: whether we use gray as the heat map. Default is true.</span></div><div class="line"><span class="comment">% cols: how many columns are there in the display. Default value is the</span></div><div class="line"><span class="comment">% squareroot of the number of columns in A.</span></div><div class="line"><span class="comment">% opt_colmajor: you can switch convention to row major for A. In that</span></div><div class="line"><span class="comment">% case, each row of A is a filter. Default value is false.</span></div><div class="line">warning off all</div><div class="line"></div><div class="line"><span class="keyword">if</span> ~exist(<span class="string">'opt_normalize'</span>, <span class="string">'var'</span>) || <span class="built_in">isempty</span>(opt_normalize)</div><div class="line">    opt_normalize= true;</div><div class="line"><span class="keyword">end</span></div><div class="line"></div><div class="line"><span class="keyword">if</span> ~exist(<span class="string">'opt_graycolor'</span>, <span class="string">'var'</span>) || <span class="built_in">isempty</span>(opt_graycolor)</div><div class="line">    opt_graycolor= true;</div><div class="line"><span class="keyword">end</span></div><div class="line"></div><div class="line"><span class="keyword">if</span> ~exist(<span class="string">'opt_colmajor'</span>, <span class="string">'var'</span>) || <span class="built_in">isempty</span>(opt_colmajor)</div><div class="line">    opt_colmajor = false;</div><div class="line"><span class="keyword">end</span></div><div class="line"></div><div class="line"><span class="comment">% rescale</span></div><div class="line">A = A - mean(A(:));</div><div class="line"></div><div class="line"><span class="keyword">if</span> opt_graycolor, colormap(gray); <span class="keyword">end</span></div><div class="line"></div><div class="line"><span class="comment">% compute rows, cols</span></div><div class="line">[L M]=<span class="built_in">size</span>(A);</div><div class="line">sz=<span class="built_in">sqrt</span>(L);</div><div class="line">buf=<span class="number">1</span>;</div><div class="line"><span class="keyword">if</span> ~exist(<span class="string">'cols'</span>, <span class="string">'var'</span>)</div><div class="line">    <span class="keyword">if</span> <span class="built_in">floor</span>(<span class="built_in">sqrt</span>(M))^<span class="number">2</span> ~= M</div><div class="line">        n=<span class="built_in">ceil</span>(<span class="built_in">sqrt</span>(M));</div><div class="line">        <span class="keyword">while</span> <span class="built_in">mod</span>(M, n)~=<span class="number">0</span> &amp;&amp; n&lt;<span class="number">1.2</span>*<span class="built_in">sqrt</span>(M), n=n+<span class="number">1</span>; <span class="keyword">end</span></div><div class="line">        m=<span class="built_in">ceil</span>(M/n);</div><div class="line">    <span class="keyword">else</span></div><div class="line">        n=<span class="built_in">sqrt</span>(M);</div><div class="line">        m=n;</div><div class="line">    <span class="keyword">end</span></div><div class="line"><span class="keyword">else</span></div><div class="line">    n = cols;</div><div class="line">    m = <span class="built_in">ceil</span>(M/n);</div><div class="line"><span class="keyword">end</span></div><div class="line"></div><div class="line">array=-<span class="built_in">ones</span>(buf+m*(sz+buf),buf+n*(sz+buf));</div><div class="line"></div><div class="line"><span class="keyword">if</span> ~opt_graycolor</div><div class="line">    array = <span class="number">0.1</span>.* array;</div><div class="line"><span class="keyword">end</span></div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">if</span> ~opt_colmajor</div><div class="line">    k=<span class="number">1</span>;</div><div class="line">    <span class="keyword">for</span> <span class="built_in">i</span>=<span class="number">1</span>:m</div><div class="line">        <span class="keyword">for</span> <span class="built_in">j</span>=<span class="number">1</span>:n</div><div class="line">            <span class="keyword">if</span> k&gt;M, </div><div class="line">                <span class="keyword">continue</span>; </div><div class="line">            <span class="keyword">end</span></div><div class="line">            clim=max(<span class="built_in">abs</span>(A(:,k)));</div><div class="line">            <span class="keyword">if</span> opt_normalize</div><div class="line">                array(buf+(<span class="built_in">i</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz),buf+(<span class="built_in">j</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz))=<span class="built_in">reshape</span>(A(:,k),sz,sz)'/clim;</div><div class="line">            <span class="keyword">else</span></div><div class="line">                array(buf+(<span class="built_in">i</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz),buf+(<span class="built_in">j</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz))=<span class="built_in">reshape</span>(A(:,k),sz,sz)'/max(<span class="built_in">abs</span>(A(:)));</div><div class="line">            <span class="keyword">end</span></div><div class="line">            k=k+<span class="number">1</span>;</div><div class="line">        <span class="keyword">end</span></div><div class="line">    <span class="keyword">end</span></div><div class="line"><span class="keyword">else</span></div><div class="line">    k=<span class="number">1</span>;</div><div class="line">    <span class="keyword">for</span> <span class="built_in">j</span>=<span class="number">1</span>:n</div><div class="line">        <span class="keyword">for</span> <span class="built_in">i</span>=<span class="number">1</span>:m</div><div class="line">            <span class="keyword">if</span> k&gt;M, </div><div class="line">                <span class="keyword">continue</span>; </div><div class="line">            <span class="keyword">end</span></div><div class="line">            clim=max(<span class="built_in">abs</span>(A(:,k)));</div><div class="line">            <span class="keyword">if</span> opt_normalize</div><div class="line">                array(buf+(<span class="built_in">i</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz),buf+(<span class="built_in">j</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz))=<span class="built_in">reshape</span>(A(:,k),sz,sz)'/clim;</div><div class="line">            <span class="keyword">else</span></div><div class="line">                array(buf+(<span class="built_in">i</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz),buf+(<span class="built_in">j</span><span class="number">-1</span>)*(sz+buf)+(<span class="number">1</span>:sz))=<span class="built_in">reshape</span>(A(:,k),sz,sz)';</div><div class="line">            <span class="keyword">end</span></div><div class="line">            k=k+<span class="number">1</span>;</div><div class="line">        <span class="keyword">end</span></div><div class="line">    <span class="keyword">end</span></div><div class="line"><span class="keyword">end</span></div><div class="line"></div><div class="line"><span class="keyword">if</span> opt_graycolor</div><div class="line">    h=imagesc(array);</div><div class="line"><span class="keyword">else</span></div><div class="line">    h=imagesc(array,<span class="string">'EraseMode'</span>,<span class="string">'none'</span>,[<span class="number">-1</span> <span class="number">1</span>]);</div><div class="line"><span class="keyword">end</span></div><div class="line">axis image off</div><div class="line"></div><div class="line">drawnow;</div><div class="line"></div><div class="line">warning on all</div></pre></td></tr></table></figure></p></li>
+<li><p>在matlab里运行以下代码：<br>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">nsample = <span class="number">2</span>;</div><div class="line"><span class="comment">% num_output = 96; % conv1</span></div><div class="line"><span class="comment">% num_output = 256; % conv5</span></div><div class="line">num_output = <span class="number">4096</span>; <span class="comment">% fc7</span></div><div class="line"></div><div class="line">load features_fc7.mat</div><div class="line">width = <span class="built_in">size</span>(feats, <span class="number">2</span>);</div><div class="line">nmap = width / num_output;</div><div class="line"></div><div class="line"><span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span> : nsample</div><div class="line">    feat = feats(<span class="built_in">i</span>, :);</div><div class="line">    feat = <span class="built_in">reshape</span>(feat, [nmap num_output]);</div><div class="line">    figure(<span class="string">'name'</span>, sprintf(<span class="string">'image #%d'</span>, <span class="built_in">i</span>));</div><div class="line">    display_network(feat);</div><div class="line"><span class="keyword">end</span></div></pre></td></tr></table></figure></p></li>
+</ul></li>
+</ol>
+<h3 id="在python中读取mat文件">在python中读取mat文件</h3>
+<p>在python中，使用<code>scipy.io.loadmat()</code>即可读取mat文件，返回一个<code>dict()</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> scipy.io</div><div class="line">matfile = <span class="string">'features_fc7.mat'</span></div><div class="line">data = scipy.io.loadmat(matfile)</div></pre></td></tr></table></figure>
+<h2 id="使用自己的网络">使用自己的网络</h2>
+<p>只需把前面列出来的文件与参数修改成自定义的即可。</p>
+<h2 id="使用model-zoo里的网络">使用Model Zoo里的网络</h2>
+<p>根据 <a href="https://github.com/BVLC/caffe/wiki/Model-Zoo" class="uri" target="_blank" rel="external">https://github.com/BVLC/caffe/wiki/Model-Zoo</a> 的介绍，选择自己所需的网络，并下载到相应位置即可。</p>
+<p>如VGG-16：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">./scripts/download_model_from_gist.sh 211839e770f7b538e2d8</div><div class="line">mv ./models/211839e770f7b538e2d8 ./models/VGG_ILSVRC_16_layers</div><div class="line">./scripts/download_model_binary.py ./models/VGG_ILSVRC_16_layers</div></pre></td></tr></table></figure>
+<h2 id="参考">参考</h2>
+<p><a href="http://nbviewer.ipython.org/github/BVLC/caffe/blob/master/examples/00-classification.ipynb" class="uri" target="_blank" rel="external">http://nbviewer.ipython.org/github/BVLC/caffe/blob/master/examples/00-classification.ipynb</a></p>
+<p><a href="http://caffe.berkeleyvision.org/gathered/examples/feature_extraction.html" class="uri" target="_blank" rel="external">http://caffe.berkeleyvision.org/gathered/examples/feature_extraction.html</a></p>
+<p><a href="http://www.cnblogs.com/platero/p/3967208.html" class="uri" target="_blank" rel="external">http://www.cnblogs.com/platero/p/3967208.html</a></p>
+<p><a href="https://lmdb.readthedocs.org/en/release/" class="uri" target="_blank" rel="external">https://lmdb.readthedocs.org/en/release/</a></p>
+
+            
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2015/08/31/2015_08_31_KNN/"  data-tooltip="K-Nearest Neighbor algorithm K最邻近结点算法">
+                
+                    <i class="fa fa-angle-left"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">Previous</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2015/08/17/2015_08_17_Python_Image_Combination/" data-tooltip="Python使用Image合并图像">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">Next</span>
+                    <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions"  href="#btn-open-shareoptions">
+                <i class="fa fa-share-alt"></i>
+            </a>
+        </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-facebook-official"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-google-plus"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-weibo"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    <a class="post-action-btn btn btn--default" target="new" href="#qrcode" id="show_qrcode">
+                        <i class="fa fa-weixin"></i>
+                    </a>
+                    <div id="qrcode" style="display:none"></div>
+                
+            </li>
+        
+        
+            <li class="post-action">
+                <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                    <i class="fa fa-comment-o"></i>
+                </a>
+            </li>
+        
+        <li class="post-action">
+            <a class="post-action-btn btn btn--default" href="#table-of-contents">
+                <i class="fa fa-list"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 Jiancheng Li. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2015/08/31/2015_08_31_KNN/"  data-tooltip="K-Nearest Neighbor algorithm K最邻近结点算法">
+                
+                    <i class="fa fa-angle-left"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">Previous</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2015/08/17/2015_08_17_Python_Image_Combination/" data-tooltip="Python使用Image合并图像">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">Next</span>
+                    <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions"  href="#btn-open-shareoptions">
+                <i class="fa fa-share-alt"></i>
+            </a>
+        </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-facebook-official"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-google-plus"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-weibo"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    <a class="post-action-btn btn btn--default" target="new" href="#qrcode" id="show_qrcode">
+                        <i class="fa fa-weixin"></i>
+                    </a>
+                    <div id="qrcode" style="display:none"></div>
+                
+            </li>
+        
+        
+            <li class="post-action">
+                <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                    <i class="fa fa-comment-o"></i>
+                </a>
+            </li>
+        
+        <li class="post-action">
+            <a class="post-action-btn btn btn--default" href="#table-of-contents">
+                <i class="fa fa-list"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-close"></i>
+    <ul class="share-options">
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-twitter"></i><span>Share on Twitter</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-google-plus"></i><span>Share on Google+</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/">
+                        <i class="fa fa-weibo"></i><span>Share on Weibo</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    <a class="share-option-btn" target="new" href="#qrcode" id="show_qrcode">
+                        <i class="fa fa-weixin"></i><span>Share on Weixin</span>
+                    </a>
+                    <div id="qrcode" style="display:none"></div>
+                
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-remove"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/avatar.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Jiancheng Li</h4>
+        
+            <div id="about-card-bio">lijiancheng0614@gmail.com</div>
+        
+        
+        <p><a href="http://blog.csdn.net/lijiancheng0614">http://blog.csdn.net/lijiancheng0614</a></p>
+        <p><a href="http://blog.sina.com.cn/lijiancheng5201314">http://blog.sina.com.cn/lijiancheng5201314</a></p>
+        <p><a href="http://www.douban.com/people/lijiancheng0614">http://www.douban.com/people/lijiancheng0614</a></p>
+        <p><a href="https://zh.wikipedia.org/wiki/User:Lijiancheng0614">https://zh.wikipedia.org/wiki/User:Lijiancheng0614</a></p>
+    </div>
+</div>
+
+        <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-close"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="https://www.algolia.com/static_assets/images/press/downloads/algolia-light.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2013/05/18/2013_05_18_ICPC2013Nanjing_E/">
+                            <img class="media-image" src="https://icpc.baylor.edu/img/welcome/cm2-logo-panel_joel_wo_lang.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2013/05/18/2013_05_18_ICPC2013Nanjing_E/">
+                            <h3 class="media-heading">ICPC2013南京邀请赛 E. Eloh 解题报告</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 18, 2013
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>ICPC2013南京邀请赛 E. Eloh 解题报告</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2014/06/05/2014_06_05_Jekyll/">
+                            <h3 class="media-heading">Jekyll</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jun 5, 2014
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Studying Jekyll.</p>
+<p>Migrating the website to Jekyll.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2014/06/27/2014_06_27_jwgl/">
+                            <img class="media-image" src="http://lijiancheng0614.github.io/2014/06/27/2014_06_27_jwgl/screenshot2.jpg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2014/06/27/2014_06_27_jwgl/">
+                            <h3 class="media-heading">教务系统课程评价自动填写</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jun 27, 2014
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>教务系统课程评价自动填写</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Handler/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/d/db/Android_robot_2014.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Handler/">
+                            <h3 class="media-heading">Android Handler的处理方式</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 13, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>在写Android App时，一些逻辑不能放在UI线程中，于是可能会用到Handler。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Socket/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/d/db/Android_robot_2014.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Socket/">
+                            <h3 class="media-heading">Android客户端使用socket通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 13, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Android作为客户端（client）对服务器（server）进行request操作，并从服务器中得到response。</p>
+<p>这里主要使用socket来进行数据传输。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/15/2015_04_15_Java_Socket/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/en/3/30/Java_programming_language_logo.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/15/2015_04_15_Java_Socket/">
+                            <h3 class="media-heading">Java服务器使用socket通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 15, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>用Java来写一个简单的服务器（server），对客户端（client）的request进行回应。</p>
+<p>这个sample主要使用socket来进行演示，分别可以接收与发送string和object。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_Code_Hunt_SECTOR_02/">
+                            <img class="media-image" src="https://az590446.vo.msecnd.net/images/splash-logo-lowres.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_Code_Hunt_SECTOR_02/">
+                            <h3 class="media-heading">Code Hunt SECTOR 02 LOOPS</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 19, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Code Hunt SECTOR 02 LOOPS</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_CSharp_Number_System/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/0/0d/C_Sharp_wordmark.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_CSharp_Number_System/">
+                            <h3 class="media-heading">C#进制间的转换</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 19, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>把<code>string</code>变量 <code>x</code> 转换为另一种进制的<code>string</code></p>
+<p>第一行为直接转换，</p>
+<p>第二行为数字宽度为6（前面不足补0），总宽度为8的字符串。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/22/2015_04_22_Python_Socket/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Python_logo_and_wordmark.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/22/2015_04_22_Python_Socket/">
+                            <h3 class="media-heading">Python使用socket通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 22, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>整理Python官网给的sample：<a href="https://docs.python.org/3/library/socket.html" class="uri" target="_blank" rel="external">https://docs.python.org/3/library/socket.html</a></p>
+<p>官网展示了支持IPv4的TCP代码，这里也展示UDP的代码，两者基本类似。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/27/2015_04_27_Android_HTTP/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/d/db/Android_robot_2014.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/27/2015_04_27_Android_HTTP/">
+                            <h3 class="media-heading">Android客户端使用HTTP通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 27, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Android作为客户端（client）对服务器（server）进行request操作，并从服务器中得到response。</p>
+<p>这里主要使用HTTP来进行数据传输，request有GET和POST两种方式。</p>
+<p>完整的项目：<a href="https://github.com/lijiancheng0614/android-NetworkConnect" class="uri" target="_blank" rel="external">https://github.com/lijiancheng0614/android-NetworkConnect</a></p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                114 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/script.min.js"></script>
+<!--SCRIPTS END-->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+    <script type="text/javascript">
+        $('#qrcode').qrcode({
+            text: "http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/"
+        });
+        $("#show_qrcode").fancybox();
+    </script>
+
+</script>
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'http://lijiancheng0614.github.io/2015/08/21/2015_08_21_CAFFE_Features/';
+                 
+                    this.page.identifier = '2015/08/21/2015_08_21_CAFFE_Features/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'lijiancheng0614';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
+    <script src="//cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js"></script>
+    <script>
+        var algoliaClient = algoliasearch('MUUPC9BXF1', '24df25d4c210daa741ebc4ae87a8844c');
+        var algoliaIndex = algoliaClient.initIndex('my-hexo-blog');
+    </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    </body>
+</html>

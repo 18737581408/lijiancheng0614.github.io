@@ -1,0 +1,1070 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="lijiancheng0614">
+    <title>使用TensorFlow DeepLab进行语义分割 - lijiancheng0614</title>
+    <meta name="author" content="Jiancheng Li">
+    
+    
+        <link rel="icon" href="http://lijiancheng0614.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <meta name="description" content="参考 https://github.com/tensorflow/models/tree/master/research/deeplab 使用 TensorFlow DeepLab 进行语义分割">
+<meta name="keywords" content="Computer Vision,Deep Learning,TensorFlow">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="使用TensorFlow DeepLab进行语义分割">
+<meta property="og:url" content="http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/index.html">
+<meta property="og:site_name" content="lijiancheng0614">
+<meta property="og:description" content="参考 https://github.com/tensorflow/models/tree/master/research/deeplab 使用 TensorFlow DeepLab 进行语义分割">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/tensorflow/models/master/research/deeplab/g3doc/img/vis1.png">
+<meta property="og:image" content="http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/plot_image1.png">
+<meta property="og:updated_time" content="2018-03-18T16:31:58.167Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用TensorFlow DeepLab进行语义分割">
+<meta name="twitter:description" content="参考 https://github.com/tensorflow/models/tree/master/research/deeplab 使用 TensorFlow DeepLab 进行语义分割">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/tensorflow/models/master/research/deeplab/g3doc/img/vis1.png">
+<meta name="twitter:creator" content="@lijiancheng0614">
+    
+        <link rel="publisher" href="https://plus.google.com/+JianchengLi"/>
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://lijiancheng0614.github.io/assets/images/avatar.jpg"/>
+    
+    
+        <meta property="og:image" content="http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/plot_image1.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/plot_image1.png" />
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/style.min.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-66414521-1']);
+        _gaq.push(['_trackPageview']);
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?e1deebf45fca6db0c7cac1c85f8b91b5";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">lijiancheng0614</a>
+    </div>
+    
+        
+            <a  class="header-right-icon open-algolia-search"
+                href="#search">
+        
+        
+            <i class="fa fa-lg fa-search"></i>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/avatar.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Jiancheng Li</h4>
+                
+                    <h5 class="sidebar-profile-bio">lijiancheng0614@gmail.com</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/projects"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-file-code-o"></i>
+                        <span class="sidebar-button-desc">Projects</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-search"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/lijiancheng0614" target="_blank" rel="noopener">
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/lijiancheng0614/" target="_blank" rel="noopener">
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-linkedin"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:lijiancheng0614@gmail.com" target="_blank" rel="noopener">
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-envelope-o"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-rss"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post" itemscope itemType="http://schema.org/BlogPosting">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title" itemprop="headline">
+            使用TensorFlow DeepLab进行语义分割
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time itemprop="datePublished" datetime="2018-03-13T00:00:00+08:00">
+	
+		    Mar 13, 2018
+    	
+    </time>
+    
+        <span>in </span>
+        <strong>
+    <a class="category-link" href="/categories/Research/">Research</a>
+
+</strong>
+    
+    
+        / 
+        <span class="text-color-light text-small">Tagged in</span>
+        <strong>
+    <a class="tag-link" href="/tags/Computer-Vision/">Computer Vision</a>, <a class="tag-link" href="/tags/Deep-Learning/">Deep Learning</a>, <a class="tag-link" href="/tags/TensorFlow/">TensorFlow</a>
+</strong>
+    
+</div>
+
+    
+</div>
+    
+    <div class="post-content markdown" itemprop="articleBody">
+        <div class="main-content-wrap">
+            <span id="table-of-contents"></span><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#准备"><span class="toc-text">准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#训练"><span class="toc-text">训练</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试"><span class="toc-text">测试</span></a></li></ol>
+            <p>参考 <a href="https://github.com/tensorflow/models/tree/master/research/deeplab" class="uri" target="_blank" rel="external">https://github.com/tensorflow/models/tree/master/research/deeplab</a></p>
+<p>使用 TensorFlow DeepLab 进行语义分割</p>
+<a id="more"></a>
+<div class="figure">
+<img src="https://raw.githubusercontent.com/tensorflow/models/master/research/deeplab/g3doc/img/vis1.png">
+
+</div>
+<h2 id="准备">准备</h2>
+<ol start="0" style="list-style-type: decimal">
+<li><p>文件结构</p>
+<p>这里以 PASCAL VOC 2012 为例，参考官方推荐的文件结构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line">deeplab/datasets/pascal_voc_seg</div><div class="line">├── exp</div><div class="line">│   └── train_on_train_set</div><div class="line">│       ├── eval</div><div class="line">│       │   └── events.out.tfevents....</div><div class="line">│       ├── export</div><div class="line">│       │   └── frozen_inference_graph.pb</div><div class="line">│       ├── train</div><div class="line">│       │   ├── checkpoint</div><div class="line">│       │   ├── events.out.tfevents....</div><div class="line">│       │   ├── graph.pbtxt</div><div class="line">│       │   ├── model.ckpt-0.data-00000-of-00001</div><div class="line">│       │   ├── model.ckpt-0.index</div><div class="line">│       │   ├── model.ckpt-0.meta</div><div class="line">│       │   └── ...</div><div class="line">│       └── vis</div><div class="line">│           ├── graph.pbtxt</div><div class="line">│           ├── raw_segmentation_results</div><div class="line">│           └── segmentation_results</div><div class="line">├── init_models</div><div class="line">│   └── deeplabv3_pascal_train_aug</div><div class="line">│       ├── frozen_inference_graph.pb</div><div class="line">│       ├── model.ckpt.data-00000-of-00001</div><div class="line">│       └── model.ckpt.index</div><div class="line">├── tfrecord</div><div class="line">│   ├── ....tfrecord</div><div class="line">│   └── ...</div><div class="line">└── VOCdevkit</div><div class="line">    └── VOC2012</div><div class="line">        ├── Annotations</div><div class="line">        ├── ImageSets</div><div class="line">        │   ├── Action</div><div class="line">        │   ├── Layout</div><div class="line">        │   ├── Main</div><div class="line">        │   └── Segmentation</div><div class="line">        ├── JPEGImages</div><div class="line">        ├── SegmentationClass</div><div class="line">        ├── SegmentationClassRaw</div><div class="line">        └── SegmentationObject</div></pre></td></tr></table></figure></li>
+<li><p>安装 TensorFlow</p>
+<p>参考 <a href="https://www.tensorflow.org/install/" class="uri" target="_blank" rel="external">https://www.tensorflow.org/install/</a> ，安装 TensorFlow v1.5.0 或更新的版本。</p>
+<p>如果操作系统、GPU 型号、Python 版本号等配置跟官方一致，可直接使用官网提供的安装包安装。</p>
+<blockquote>
+<p>编译源码时注意 bazel 可能并不能总是获取 <code>$LD_LIBRARY_PATH</code>，如有报错，可以尝试添加参数 <code>action_env</code>：<br>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">bazel build --config=opt --config=cuda tensorflow/tools/pip_package:build_pip_package --action_env=&quot;LD_LIBRARY_PATH=$&#123;LD_LIBRARY_PATH&#125;&quot;</div></pre></td></tr></table></figure></p>
+</blockquote></li>
+<li><p>配置 TensorFlow Models</p>
+<ul>
+<li>下载 TensorFlow Models</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git <span class="built_in">clone</span> https://github.com/tensorflow/models.git</div></pre></td></tr></table></figure>
+<ul>
+<li>添加 <code>$PYTHONPATH</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From tensorflow/models/research/</span></div><div class="line"><span class="built_in">export</span> PYTHONPATH=<span class="variable">$PYTHONPATH</span>:`<span class="built_in">pwd</span>`:`<span class="built_in">pwd</span>`/slim</div></pre></td></tr></table></figure>
+<ul>
+<li>测试</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From tensorflow/models/research/</span></div><div class="line">python deeplab/model_test.py</div></pre></td></tr></table></figure>
+<p>若成功，显示<code>OK</code>。</p></li>
+<li><p>准备数据</p>
+<p>这里以 <code>PASCAL VOC 2012</code> 为例。</p>
+<p>参考 <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/pascal.md" class="uri" target="_blank" rel="external">https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/pascal.md</a></p>
+<p>运行以下代码即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/</span></div><div class="line">sh download_and_convert_voc2012.sh</div></pre></td></tr></table></figure>
+<p>实际上，该脚本执行了以下操作：</p>
+<ul>
+<li>下载并解压</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/pascal_voc_seg/</span></div><div class="line">wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar</div><div class="line">tar -xf VOCtrainval_11-May-2012.tar</div></pre></td></tr></table></figure>
+<ul>
+<li>移除 ground-truth 中的 colormap</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/</span></div><div class="line">PASCAL_ROOT=<span class="string">"pascal_voc_seg/VOCdevkit/VOC2012"</span></div><div class="line">SEG_FOLDER=<span class="string">"<span class="variable">$&#123;PASCAL_ROOT&#125;</span>/SegmentationClass"</span></div><div class="line">SEMANTIC_SEG_FOLDER=<span class="string">"<span class="variable">$&#123;PASCAL_ROOT&#125;</span>/SegmentationClassRaw"</span></div><div class="line">python ./remove_gt_colormap.py \</div><div class="line">    --original_gt_folder=<span class="string">"<span class="variable">$&#123;SEG_FOLDER&#125;</span>"</span> \</div><div class="line">    --output_dir=<span class="string">"<span class="variable">$&#123;SEMANTIC_SEG_FOLDER&#125;</span>"</span></div></pre></td></tr></table></figure>
+<ul>
+<li>生成 TFRecord</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/</span></div><div class="line">OUTPUT_DIR=<span class="string">"pascal_voc_seg/tfrecord"</span></div><div class="line">mkdir -p <span class="string">"<span class="variable">$&#123;OUTPUT_DIR&#125;</span>"</span></div><div class="line">IMAGE_FOLDER=<span class="string">"<span class="variable">$&#123;PASCAL_ROOT&#125;</span>/JPEGImages"</span></div><div class="line">LIST_FOLDER=<span class="string">"<span class="variable">$&#123;PASCAL_ROOT&#125;</span>/ImageSets/Segmentation"</span></div><div class="line">python ./build_voc2012_data.py \</div><div class="line">    --image_folder=<span class="string">"<span class="variable">$&#123;IMAGE_FOLDER&#125;</span>"</span> \</div><div class="line">    --semantic_segmentation_folder=<span class="string">"<span class="variable">$&#123;SEMANTIC_SEG_FOLDER&#125;</span>"</span> \</div><div class="line">    --list_folder=<span class="string">"<span class="variable">$&#123;LIST_FOLDER&#125;</span>"</span> \</div><div class="line">    --image_format=<span class="string">"jpg"</span> \</div><div class="line">    --output_dir=<span class="string">"<span class="variable">$&#123;OUTPUT_DIR&#125;</span>"</span></div></pre></td></tr></table></figure></li>
+<li><p>（可选）下载模型</p>
+<p>官方提供了不少预训练模型（ <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md" class="uri" target="_blank" rel="external">https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md</a> ），</p>
+<p>这里以 <code>deeplabv3_pascal_train_aug_2018_01_04</code> 以例。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/pascal_voc_seg/</span></div><div class="line">mkdir init_models</div><div class="line"><span class="built_in">cd</span> init_models</div><div class="line">wget http://download.tensorflow.org/models/deeplabv3_pascal_train_aug_2018_01_04.tar.gz</div><div class="line">tar zxf ssd_mobilenet_v1_coco_11_06_2017.tar.gz</div></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="训练">训练</h2>
+<p>如果使用现有模型进行预测则不需要训练。</p>
+<ol style="list-style-type: decimal">
+<li><p>训练</p>
+<p>新建 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/train.sh</code>，内容如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">mkdir -p logs/</div><div class="line">now=$(date +<span class="string">"%Y%m%d_%H%M%S"</span>)</div><div class="line">python ../../../../train.py \</div><div class="line">    --logtostderr \</div><div class="line">    --train_split=<span class="string">"train"</span> \</div><div class="line">    --model_variant=<span class="string">"xception_65"</span> \</div><div class="line">    --atrous_rates=6 \</div><div class="line">    --atrous_rates=12 \</div><div class="line">    --atrous_rates=18 \</div><div class="line">    --output_stride=16 \</div><div class="line">    --decoder_output_stride=4 \</div><div class="line">    --train_crop_size=513 \</div><div class="line">    --train_crop_size=513 \</div><div class="line">    --train_batch_size=4 \</div><div class="line">    --training_number_of_steps=10 \</div><div class="line">    --fine_tune_batch_norm=<span class="literal">false</span> \</div><div class="line">    --tf_initial_checkpoint=<span class="string">"../../init_models/deeplabv3_pascal_train_aug/model.ckpt"</span> \</div><div class="line">    --train_logdir=<span class="string">"train/"</span> \</div><div class="line">    --dataset_dir=<span class="string">"../../tfrecord/"</span> 2&gt;&amp;1 | tee logs/train_<span class="variable">$now</span>.txt &amp;</div></pre></td></tr></table></figure>
+<p>进入 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/</code>，</p>
+<p>运行 <code>sh train.sh</code> 即可训练。</p></li>
+<li><p>验证</p>
+<p>可一边训练一边验证，注意使用其它的GPU或合理分配显存。</p>
+<p>新建 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/eval.sh</code>，内容如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">python ../../../../eval.py \</div><div class="line">    --logtostderr \</div><div class="line">    --eval_split=<span class="string">"val"</span> \</div><div class="line">    --model_variant=<span class="string">"xception_65"</span> \</div><div class="line">    --atrous_rates=6 \</div><div class="line">    --atrous_rates=12 \</div><div class="line">    --atrous_rates=18 \</div><div class="line">    --output_stride=16 \</div><div class="line">    --decoder_output_stride=4 \</div><div class="line">    --eval_crop_size=513 \</div><div class="line">    --eval_crop_size=513 \</div><div class="line">    --checkpoint_dir=<span class="string">"train/"</span> \</div><div class="line">    --eval_logdir=<span class="string">"eval/"</span> \</div><div class="line">    --dataset_dir=<span class="string">"../../tfrecord/"</span> &amp;</div><div class="line">    <span class="comment"># --max_number_of_evaluations=1 &amp;</span></div></pre></td></tr></table></figure>
+<p>进入 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/</code>，</p>
+<p>运行 <code>CUDA_VISIBLE_DEVICES=&quot;1&quot; sh eval.sh</code> 即可验证（这里指定了第二个 GPU）。</p></li>
+<li><p>可视化 log</p>
+<p>可一边训练一边可视化训练的 log，访问 <code>http://localhost:6006/</code> 即可看到 loss 等的变化。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/pascal_voc_seg/exp/train_on_train_set</span></div><div class="line">tensorboard --logdir train/</div></pre></td></tr></table></figure>
+<p>可视化验证的 log，可看到 <code>miou_1.0</code> 的变化，这里指定了另一个端口。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/pascal_voc_seg/exp/train_on_train_set</span></div><div class="line">tensorboard --logdir <span class="built_in">eval</span>/ --port 6007</div></pre></td></tr></table></figure>
+<p>或同时可视化训练与验证的log：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/pascal_voc_seg/exp/train_on_train_set</span></div><div class="line">tensorboard --logdir .</div></pre></td></tr></table></figure></li>
+<li><p>可视化分割结果</p>
+<p>可一边训练一边可视化分割结果。</p>
+<p>新建 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/vis.sh</code>，内容如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">python ../../../../vis.py \</div><div class="line">    --logtostderr \</div><div class="line">    --vis_split=<span class="string">"val"</span> \</div><div class="line">    --model_variant=<span class="string">"xception_65"</span> \</div><div class="line">    --atrous_rates=6 \</div><div class="line">    --atrous_rates=12 \</div><div class="line">    --atrous_rates=18 \</div><div class="line">    --output_stride=16 \</div><div class="line">    --decoder_output_stride=4 \</div><div class="line">    --vis_crop_size=513 \</div><div class="line">    --vis_crop_size=513 \</div><div class="line">    --checkpoint_dir=<span class="string">"train/"</span> \</div><div class="line">    --vis_logdir=<span class="string">"vis/"</span> \</div><div class="line">    --dataset_dir=<span class="string">"../../tfrecord/"</span> &amp;</div><div class="line">    <span class="comment"># --max_number_of_evaluations=1 &amp;</span></div></pre></td></tr></table></figure>
+<p>进入 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/</code>，</p>
+<p>运行 <code>sh vis.sh</code> 即可生成分割结果，<code>vis/segmentation_results/</code> 里有彩色化的分割结果，<code>vis/raw_segmentation_results/</code> 里有原始的分割结果。</p></li>
+</ol>
+<h2 id="测试">测试</h2>
+<ol style="list-style-type: decimal">
+<li><p>导出模型</p>
+<p>训练完成后得到一些 checkpoint 文件在 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/train/</code> 中，如：</p>
+<ul>
+<li>graph.pbtxt</li>
+<li>model.ckpt-1000.data-00000-of-00001</li>
+<li>model.ckpt-1000.info</li>
+<li>model.ckpt-1000.meta</li>
+</ul>
+<p>其中 meta 文件保存了 graph 和 metadata，ckpt 文件保存了网络的 weights。</p>
+<p>而进行预测时只需模型和权重，不需要 metadata，故可使用官方提供的脚本生成推导图。</p>
+<p>新建 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/export_model.sh</code>，内容如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">python ../../../../export_model.py \</div><div class="line">    --logtostderr \</div><div class="line">    --checkpoint_path=<span class="string">"train/model.ckpt-<span class="variable">$1</span>"</span> \</div><div class="line">    --export_path=<span class="string">"export/frozen_inference_graph-<span class="variable">$1</span>.pb"</span> \</div><div class="line">    --model_variant=<span class="string">"xception_65"</span> \</div><div class="line">    --atrous_rates=6 \</div><div class="line">    --atrous_rates=12 \</div><div class="line">    --atrous_rates=18 \</div><div class="line">    --output_stride=16 \</div><div class="line">    --decoder_output_stride=4 \</div><div class="line">    --num_classes=21 \</div><div class="line">    --crop_size=513 \</div><div class="line">    --crop_size=513 \</div><div class="line">    --inference_scales=1.0</div></pre></td></tr></table></figure>
+<p>进入 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/</code>，</p>
+<p>运行 <code>sh export_model.sh 1000</code> 即可导出模型 <code>export/frozen_inference_graph-1000.pb</code>。</p></li>
+<li><p>测试图片</p>
+<ul>
+<li><p>运行 <code>deeplab_demo.ipynb</code> 并修改其中的各种路径即可。</p></li>
+<li><p>或自写 inference 脚本，如 <code>deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/infer.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> sys</div><div class="line">sys.path.append(<span class="string">'../../../../utils/'</span>)</div><div class="line"><span class="keyword">from</span> matplotlib <span class="keyword">import</span> pyplot <span class="keyword">as</span> plt</div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image</div><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line"></div><div class="line"><span class="keyword">import</span> get_dataset_colormap</div><div class="line"></div><div class="line">LABEL_NAMES = np.asarray([</div><div class="line">    <span class="string">'background'</span>, <span class="string">'aeroplane'</span>, <span class="string">'bicycle'</span>, <span class="string">'bird'</span>, <span class="string">'boat'</span>, <span class="string">'bottle'</span>, <span class="string">'bus'</span>,</div><div class="line">    <span class="string">'car'</span>, <span class="string">'cat'</span>, <span class="string">'chair'</span>, <span class="string">'cow'</span>, <span class="string">'diningtable'</span>, <span class="string">'dog'</span>, <span class="string">'horse'</span>, <span class="string">'motorbike'</span>,</div><div class="line">    <span class="string">'person'</span>, <span class="string">'pottedplant'</span>, <span class="string">'sheep'</span>, <span class="string">'sofa'</span>, <span class="string">'train'</span>, <span class="string">'tv'</span></div><div class="line">])</div><div class="line"></div><div class="line">FULL_LABEL_MAP = np.arange(len(LABEL_NAMES)).reshape(len(LABEL_NAMES), <span class="number">1</span>)</div><div class="line">FULL_COLOR_MAP = get_dataset_colormap.label_to_color_image(FULL_LABEL_MAP)</div><div class="line"></div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">DeepLabModel</span><span class="params">(object)</span>:</span></div><div class="line">    <span class="string">"""Class to load deeplab model and run inference."""</span></div><div class="line"></div><div class="line">    INPUT_TENSOR_NAME = <span class="string">'ImageTensor:0'</span></div><div class="line">    OUTPUT_TENSOR_NAME = <span class="string">'SemanticPredictions:0'</span></div><div class="line">    INPUT_SIZE = <span class="number">513</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, model_path)</span>:</span></div><div class="line">        <span class="string">"""Creates and loads pretrained deeplab model."""</span></div><div class="line">        self.graph = tf.Graph()</div><div class="line">        <span class="keyword">with</span> open(model_path) <span class="keyword">as</span> fd:</div><div class="line">            graph_def = tf.GraphDef.FromString(fd.read())</div><div class="line">        <span class="keyword">with</span> self.graph.as_default():</div><div class="line">            tf.import_graph_def(graph_def, name=<span class="string">''</span>)</div><div class="line">        self.sess = tf.Session(graph=self.graph)</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(self, image)</span>:</span></div><div class="line">        <span class="string">"""Runs inference on a single image.</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        Args:</span></div><div class="line"><span class="string">            image: A PIL.Image object, raw input image.</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        Returns:</span></div><div class="line"><span class="string">            resized_image: RGB image resized from original input image.</span></div><div class="line"><span class="string">            seg_map: Segmentation map of `resized_image`.</span></div><div class="line"><span class="string">        """</span></div><div class="line">        width, height = image.size</div><div class="line">        resize_ratio = <span class="number">1.0</span> * self.INPUT_SIZE / max(width, height)</div><div class="line">        target_size = (int(resize_ratio * width), int(resize_ratio * height))</div><div class="line">        resized_image = image.convert(<span class="string">'RGB'</span>).resize(target_size,</div><div class="line">                                                    Image.ANTIALIAS)</div><div class="line">        batch_seg_map = self.sess.run(</div><div class="line">            self.OUTPUT_TENSOR_NAME,</div><div class="line">            feed_dict=&#123;</div><div class="line">                self.INPUT_TENSOR_NAME: [np.asarray(resized_image)]</div><div class="line">            &#125;)</div><div class="line">        seg_map = batch_seg_map[<span class="number">0</span>]</div><div class="line">        <span class="keyword">return</span> resized_image, seg_map</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">vis_segmentation</span><span class="params">(image, seg_map)</span>:</span></div><div class="line">    plt.figure()</div><div class="line"></div><div class="line">    plt.subplot(<span class="number">221</span>)</div><div class="line">    plt.imshow(image)</div><div class="line">    plt.axis(<span class="string">'off'</span>)</div><div class="line">    plt.title(<span class="string">'input image'</span>)</div><div class="line"></div><div class="line">    plt.subplot(<span class="number">222</span>)</div><div class="line">    seg_image = get_dataset_colormap.label_to_color_image(</div><div class="line">        seg_map, get_dataset_colormap.get_pascal_name()).astype(np.uint8)</div><div class="line">    plt.imshow(seg_image)</div><div class="line">    plt.axis(<span class="string">'off'</span>)</div><div class="line">    plt.title(<span class="string">'segmentation map'</span>)</div><div class="line"></div><div class="line">    plt.subplot(<span class="number">223</span>)</div><div class="line">    plt.imshow(image)</div><div class="line">    plt.imshow(seg_image, alpha=<span class="number">0.7</span>)</div><div class="line">    plt.axis(<span class="string">'off'</span>)</div><div class="line">    plt.title(<span class="string">'segmentation overlay'</span>)</div><div class="line"></div><div class="line">    unique_labels = np.unique(seg_map)</div><div class="line">    ax = plt.subplot(<span class="number">224</span>)</div><div class="line">    plt.imshow(</div><div class="line">        FULL_COLOR_MAP[unique_labels].astype(np.uint8),</div><div class="line">        interpolation=<span class="string">'nearest'</span>)</div><div class="line">    ax.yaxis.tick_right()</div><div class="line">    plt.yticks(range(len(unique_labels)), LABEL_NAMES[unique_labels])</div><div class="line">    plt.xticks([], [])</div><div class="line">    ax.tick_params(width=<span class="number">0</span>)</div><div class="line"></div><div class="line">    plt.show()</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</div><div class="line">    <span class="keyword">if</span> len(sys.argv) &lt; <span class="number">3</span>:</div><div class="line">        print(<span class="string">'Usage: python &#123;&#125; image_path model_path'</span>.format(sys.argv[<span class="number">0</span>]))</div><div class="line">        exit()</div><div class="line"></div><div class="line">    image_path = sys.argv[<span class="number">1</span>]</div><div class="line">    model_path = sys.argv[<span class="number">2</span>]</div><div class="line">    model = DeepLabModel(model_path)</div><div class="line">    orignal_im = Image.open(image_path)</div><div class="line">    resized_im, seg_map = model.run(orignal_im)</div><div class="line">    vis_segmentation(resized_im, seg_map)</div></pre></td></tr></table></figure>
+<p>运行以下命令即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># From deeplab/datasets/pascal_voc_seg/exp/train_on_train_set/</span></div><div class="line">python infer.py \</div><div class="line">    ../../../../g3doc/img/image1.jpg \</div><div class="line">    <span class="built_in">export</span>/frozen_inference_graph.pb</div></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<div class="figure">
+<img src="plot_image1.png">
+
+</div></li>
+</ul></li>
+</ol>
+
+            
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/03/16/2018_03_16_TensorFlow-DeepLab/"  data-tooltip="修改TensorFlow-DeepLab">
+                
+                    <i class="fa fa-angle-left"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">Previous</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/02/27/2018_02_27_DeepLab-v3+/" data-tooltip="DeepLab-v3+">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">Next</span>
+                    <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions"  href="#btn-open-shareoptions">
+                <i class="fa fa-share-alt"></i>
+            </a>
+        </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-facebook-official"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-google-plus"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-weibo"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    <a class="post-action-btn btn btn--default" target="new" href="#qrcode" id="show_qrcode">
+                        <i class="fa fa-weixin"></i>
+                    </a>
+                    <div id="qrcode" style="display:none"></div>
+                
+            </li>
+        
+        
+            <li class="post-action">
+                <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                    <i class="fa fa-comment-o"></i>
+                </a>
+            </li>
+        
+        <li class="post-action">
+            <a class="post-action-btn btn btn--default" href="#table-of-contents">
+                <i class="fa fa-list"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 Jiancheng Li. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/03/16/2018_03_16_TensorFlow-DeepLab/"  data-tooltip="修改TensorFlow-DeepLab">
+                
+                    <i class="fa fa-angle-left"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">Previous</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/02/27/2018_02_27_DeepLab-v3+/" data-tooltip="DeepLab-v3+">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">Next</span>
+                    <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions"  href="#btn-open-shareoptions">
+                <i class="fa fa-share-alt"></i>
+            </a>
+        </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-facebook-official"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-google-plus"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    
+                    <a class="post-action-btn btn btn--default" target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-weibo"></i>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="post-action hide-xs">
+                
+                    <a class="post-action-btn btn btn--default" target="new" href="#qrcode" id="show_qrcode">
+                        <i class="fa fa-weixin"></i>
+                    </a>
+                    <div id="qrcode" style="display:none"></div>
+                
+            </li>
+        
+        
+            <li class="post-action">
+                <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                    <i class="fa fa-comment-o"></i>
+                </a>
+            </li>
+        
+        <li class="post-action">
+            <a class="post-action-btn btn btn--default" href="#table-of-contents">
+                <i class="fa fa-list"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-close"></i>
+    <ul class="share-options">
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-twitter"></i><span>Share on Twitter</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-google-plus"></i><span>Share on Google+</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    
+                    <a class="share-option-btn" target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/">
+                        <i class="fa fa-weibo"></i><span>Share on Weibo</span>
+                    </a>
+                
+            </li>
+        
+            
+            <li class="share-option">
+                
+                    <a class="share-option-btn" target="new" href="#qrcode" id="show_qrcode">
+                        <i class="fa fa-weixin"></i><span>Share on Weixin</span>
+                    </a>
+                    <div id="qrcode" style="display:none"></div>
+                
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-remove"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/avatar.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Jiancheng Li</h4>
+        
+            <div id="about-card-bio">lijiancheng0614@gmail.com</div>
+        
+        
+        <p><a href="http://blog.csdn.net/lijiancheng0614">http://blog.csdn.net/lijiancheng0614</a></p>
+        <p><a href="http://blog.sina.com.cn/lijiancheng5201314">http://blog.sina.com.cn/lijiancheng5201314</a></p>
+        <p><a href="http://www.douban.com/people/lijiancheng0614">http://www.douban.com/people/lijiancheng0614</a></p>
+        <p><a href="https://zh.wikipedia.org/wiki/User:Lijiancheng0614">https://zh.wikipedia.org/wiki/User:Lijiancheng0614</a></p>
+    </div>
+</div>
+
+        <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-close"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="https://www.algolia.com/static_assets/images/press/downloads/algolia-light.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2013/05/18/2013_05_18_ICPC2013Nanjing_E/">
+                            <img class="media-image" src="https://icpc.baylor.edu/img/welcome/cm2-logo-panel_joel_wo_lang.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2013/05/18/2013_05_18_ICPC2013Nanjing_E/">
+                            <h3 class="media-heading">ICPC2013南京邀请赛 E. Eloh 解题报告</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 18, 2013
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>ICPC2013南京邀请赛 E. Eloh 解题报告</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2014/06/05/2014_06_05_Jekyll/">
+                            <h3 class="media-heading">Jekyll</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jun 5, 2014
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Studying Jekyll.</p>
+<p>Migrating the website to Jekyll.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2014/06/27/2014_06_27_jwgl/">
+                            <img class="media-image" src="http://lijiancheng0614.github.io/2014/06/27/2014_06_27_jwgl/screenshot2.jpg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2014/06/27/2014_06_27_jwgl/">
+                            <h3 class="media-heading">教务系统课程评价自动填写</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jun 27, 2014
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>教务系统课程评价自动填写</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Socket/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/d/db/Android_robot_2014.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Socket/">
+                            <h3 class="media-heading">Android客户端使用socket通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 13, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Android作为客户端（client）对服务器（server）进行request操作，并从服务器中得到response。</p>
+<p>这里主要使用socket来进行数据传输。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Handler/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/d/db/Android_robot_2014.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/13/2015_04_13_Android_Handler/">
+                            <h3 class="media-heading">Android Handler的处理方式</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 13, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>在写Android App时，一些逻辑不能放在UI线程中，于是可能会用到Handler。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/15/2015_04_15_Java_Socket/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/en/3/30/Java_programming_language_logo.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/15/2015_04_15_Java_Socket/">
+                            <h3 class="media-heading">Java服务器使用socket通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 15, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>用Java来写一个简单的服务器（server），对客户端（client）的request进行回应。</p>
+<p>这个sample主要使用socket来进行演示，分别可以接收与发送string和object。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_Code_Hunt_SECTOR_02/">
+                            <img class="media-image" src="https://az590446.vo.msecnd.net/images/splash-logo-lowres.png" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_Code_Hunt_SECTOR_02/">
+                            <h3 class="media-heading">Code Hunt SECTOR 02 LOOPS</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 19, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Code Hunt SECTOR 02 LOOPS</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_CSharp_Number_System/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/0/0d/C_Sharp_wordmark.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/19/2015_04_19_CSharp_Number_System/">
+                            <h3 class="media-heading">C#进制间的转换</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 19, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>把<code>string</code>变量 <code>x</code> 转换为另一种进制的<code>string</code></p>
+<p>第一行为直接转换，</p>
+<p>第二行为数字宽度为6（前面不足补0），总宽度为8的字符串。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/22/2015_04_22_Python_Socket/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Python_logo_and_wordmark.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/22/2015_04_22_Python_Socket/">
+                            <h3 class="media-heading">Python使用socket通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 22, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>整理Python官网给的sample：<a href="https://docs.python.org/3/library/socket.html" class="uri" target="_blank" rel="external">https://docs.python.org/3/library/socket.html</a></p>
+<p>官网展示了支持IPv4的TCP代码，这里也展示UDP的代码，两者基本类似。</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/27/2015_04_27_Android_HTTP/">
+                            <img class="media-image" src="https://upload.wikimedia.org/wikipedia/commons/d/db/Android_robot_2014.svg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a class="link-unstyled" href="http://lijiancheng0614.github.io/2015/04/27/2015_04_27_Android_HTTP/">
+                            <h3 class="media-heading">Android客户端使用HTTP通信</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Apr 27, 2015
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Android作为客户端（client）对服务器（server）进行request操作，并从服务器中得到response。</p>
+<p>这里主要使用HTTP来进行数据传输，request有GET和POST两种方式。</p>
+<p>完整的项目：<a href="https://github.com/lijiancheng0614/android-NetworkConnect" class="uri" target="_blank" rel="external">https://github.com/lijiancheng0614/android-NetworkConnect</a></p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                119 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/script.min.js"></script>
+<!--SCRIPTS END-->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+    <script type="text/javascript">
+        $('#qrcode').qrcode({
+            text: "http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/"
+        });
+        $("#show_qrcode").fancybox();
+    </script>
+
+</script>
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'http://lijiancheng0614.github.io/2018/03/13/2018_03_13_TensorFlow-DeepLab/';
+                 
+                    this.page.identifier = '2018/03/13/2018_03_13_TensorFlow-DeepLab/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'lijiancheng0614';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
+    <script src="//cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js"></script>
+    <script>
+        var algoliaClient = algoliasearch('MUUPC9BXF1', '24df25d4c210daa741ebc4ae87a8844c');
+        var algoliaIndex = algoliaClient.initIndex('my-hexo-blog');
+    </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+    </body>
+</html>

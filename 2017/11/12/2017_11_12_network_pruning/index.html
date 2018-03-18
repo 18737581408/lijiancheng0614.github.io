@@ -24,7 +24,7 @@
 <meta property="og:description" content="对神经网络（主要是CNN）进行剪枝，使模型运行速度变快，大小变小，且准确率与原来相近。">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="http://lijiancheng0614.github.io/2017/11/12/2017_11_12_network_pruning/pruning_filters.png">
-<meta property="og:updated_time" content="2018-03-01T16:38:21.582Z">
+<meta property="og:updated_time" content="2018-03-13T15:31:14.301Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="神经网络剪枝">
 <meta name="twitter:description" content="对神经网络（主要是CNN）进行剪枝，使模型运行速度变快，大小变小，且准确率与原来相近。">
@@ -305,12 +305,12 @@
 </div>
 <p>输入的特征图：<span class="math inline">\(x_i \in \mathbb{R}^{n_i \times h_i \times w_i}\)</span></p>
 <p>输出的特征图：<span class="math inline">\(x_{i + 1} \in \mathbb{R}^{n_{i + 1} \times h_{i + 1} \times w_{i + 1}}\)</span></p>
-<p>不考虑 bias，参数维度：<span class="math inline">\(n_i \times n_{i + 1} \times k_h \times k_w\)</span>，即有 <span class="math inline">\(n_{i + 1}\)</span> 个 3D 滤波器 <span class="math inline">\(\mathbb{F}_{i, j} \in \mathbb{R}^{n_i \times k_w \times k_w}\)</span></p>
+<p>不考虑 bias，参数维度：<span class="math inline">\(n_i \times n_{i + 1} \times k_h \times k_w\)</span>，即有 <span class="math inline">\(n_{i + 1}\)</span> 个 3D 滤波器 <span class="math inline">\(\mathbb{F}_{i, j} \in \mathbb{R}^{n_i \times k_h \times k_w}\)</span></p>
 <p>计算每个滤波器的 L1 值，取最小的若干个移除：<span class="math inline">\(n_{i + 1}\)</span> -&gt; <span class="math inline">\(n&#39;_{i + 1}\)</span></p>
 <p>这会影响后续层（卷积 / 全连接 / Batch Normalization 等）的输入：</p>
 <p>如后续卷积层的参数维度为 <span class="math inline">\(n&#39;_{i + 1} \times n_{i + 2} \times k_h \times k_w\)</span></p></li>
 <li><p>Depthwise 卷积</p>
-<p>Depthwise 卷积参数维度为 <span class="math inline">\(1 \times n_i \times k_w \times k_w\)</span></p>
+<p>Depthwise 卷积参数维度为 <span class="math inline">\(1 \times n_i \times k_h \times k_w\)</span></p>
 <p>后续的 Pointwise 卷积参数维度为 <span class="math inline">\(n_i \times n_{i + 1} \times 1 \times 1\)</span></p>
 <p>应与后续的 Pointwise 卷积一起计算 L1：即使用 <span class="math inline">\(dw[0, :, :, :] \cdot pw[:, i, :, :]\)</span></p></li>
 </ol>
@@ -929,7 +929,7 @@
                 data-message-zero="no post found"
                 data-message-one="1 post found"
                 data-message-other="{n} posts found">
-                116 posts found
+                119 posts found
             </p>
         </div>
     </div>
